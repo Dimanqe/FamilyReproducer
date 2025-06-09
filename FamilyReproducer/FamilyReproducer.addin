@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>FamilyReproducer</Name>
+    <Assembly>.\FamilyReproducer\FamilyReproducer.dll</Assembly>
+    <AddInId>f5497b08-72e3-462a-8155-2b31ca001627</AddInId>
+    <FullClassName>FamilyReproducer.Ribbon</FullClassName>
+    <VendorId>FamilyReproducer</VendorId>
+    <VendorDescription>FamilyReproducer</VendorDescription>
+  </AddIn>
+</RevitAddIns>
