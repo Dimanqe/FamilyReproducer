@@ -136,7 +136,6 @@ namespace FamilyReproducer.Services
                 }
                 catch (Exception)
                 {
-                   
                 }
 
             return geometries;

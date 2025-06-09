@@ -1,15 +1,15 @@
 ﻿#region
 
-using Autodesk.Revit.ApplicationServices;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Newtonsoft.Json;
 
 #endregion
 
@@ -111,10 +111,8 @@ namespace FamilyReproducer.Models
                 // Добавление параметров в семейство, если их ещё нет
                 // Обязательно убедитесь, что категория семейства задана
                 if (familyDoc.OwnerFamily.FamilyCategory == null)
-                {
                     familyDoc.OwnerFamily.FamilyCategory =
                         familyDoc.Settings.Categories.get_Item(BuiltInCategory.OST_GenericModel);
-                }
 
                 // Добавление параметров
                 foreach (var paramData in familyData.Parameters)
@@ -123,22 +121,18 @@ namespace FamilyReproducer.Models
                         continue;
 
                     if (!ParameterExists(familyDoc.FamilyManager, paramData.Name))
-                    {
                         try
                         {
                             var fp = familyDoc.FamilyManager.AddParameter(
                                 paramData.Name,
-                                groupTypeId: GroupTypeId.Constraints,
-                                specTypeId: SpecTypeId.Length,
+                                GroupTypeId.Constraints,
+                                SpecTypeId.Length,
                                 paramData.IsInstance);
 
                             // Установка значения или формулы
                             if (!string.IsNullOrEmpty(paramData.Formula))
-                            {
                                 familyDoc.FamilyManager.SetFormula(fp, paramData.Formula);
-                            }
                             else if (paramData.Value != null)
-                            {
                                 switch (fp.StorageType)
                                 {
                                     case StorageType.Double:
@@ -153,18 +147,16 @@ namespace FamilyReproducer.Models
                                     case StorageType.ElementId:
                                         break;
                                 }
-                            }
                         }
                         catch (Exception ex)
                         {
                             TaskDialog.Show("Error",
                                 $"Ошибка при добавлении параметра {paramData.Name}:\n{ex.Message}");
                         }
-                    }
                 }
 
                 // Сбор уже существующих опорных плоскостей по имени
-                    var refPlanes = new Dictionary<string, ReferencePlane>();
+                var refPlanes = new Dictionary<string, ReferencePlane>();
                 var collector = new FilteredElementCollector(familyDoc).OfClass(typeof(ReferencePlane));
                 foreach (ReferencePlane rp in collector)
                     if (!refPlanes.ContainsKey(rp.Name))

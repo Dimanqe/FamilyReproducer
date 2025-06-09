@@ -85,6 +85,7 @@
     <Compile Include="Models\CurveData.cs" />
     <Compile Include="Models\DimensionData.cs" />
     <Compile Include="Models\FamilyData.cs" />
+    <Compile Include="Models\ParameterDisplay.cs" />
     <Compile Include="Models\PointData.cs" />
     <Compile Include="Models\ReferenceData.cs" />
     <Compile Include="Models\ReferencePlaneData.cs" />

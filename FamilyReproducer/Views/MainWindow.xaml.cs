@@ -1,11 +1,12 @@
 ﻿#region
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Forms;
 using Autodesk.Revit.UI;
+using FamilyReproducer.Models;
 using FamilyReproducer.Services;
 using FamilyReproducer.ViewModels;
 using MessageBox = System.Windows.Forms.MessageBox;
@@ -55,23 +56,24 @@ namespace FamilyReproducer
                     var familyData = extractor.ExtractParameters(_selectedFilePath);
 
                     if (familyData != null)
-                        _viewModel.FamilyData = familyData;
-                    else
-                        MessageBox.Show("Отсутствуют данные семейтва");
-
-                    if (familyData != null)
                     {
-                        var parameters = familyData.Parameters;
+                        _viewModel.FamilyData = familyData;
 
-                        spContent.Children.Clear();
-                        foreach (var param in parameters)
-                        {
-                            var textBlock = new TextBlock
+                        var parameterDisplays = new List<ParameterDisplay>();
+
+                        foreach (var param in familyData.Parameters)
+                            parameterDisplays.Add(new ParameterDisplay
                             {
-                                Text = $"{param.Name} (Type: {param.Type}, Instance: {param.IsInstance})"
-                            };
-                            spContent.Children.Add(textBlock);
-                        }
+                                Name = param.Name,
+                                Type = param.Type,
+                                IsInstance = param.IsInstance
+                            });
+
+                        ParametersDataGrid.ItemsSource = parameterDisplays;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Отсутствуют данные семейства");
                     }
                 }
                 catch (Exception ex)
