@@ -35,7 +35,7 @@ namespace FamilyReproducer
 
         private void BtnOpenFile_Click(object sender, RoutedEventArgs e)
         {
-            spContent.Children.Clear();
+            //spContent.Children.Clear();
             var openFileDialog = new OpenFileDialog
             {
                 Filter = "Revit Family Files (*.rfa)|*.rfa|All files (*.*)|*.*",
@@ -63,7 +63,6 @@ namespace FamilyReproducer
                     {
                         var parameters = familyData.Parameters;
 
-                        // Now, update your UI, for example, list params in spContent
                         spContent.Children.Clear();
                         foreach (var param in parameters)
                         {

@@ -1,15 +1,15 @@
 ﻿#region
 
+using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Autodesk.Revit.ApplicationServices;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
-using Newtonsoft.Json;
 
 #endregion
 
@@ -69,7 +69,6 @@ namespace FamilyReproducer.Models
             }
             catch (Exception ex)
             {
-                // Вывод подробной ошибки на русском
                 var detailed = $"Не удалось воспроизвести семейство: {ex.Message}\n{ex.StackTrace}";
                 TaskDialog.Show("Ошибка", detailed);
             }
@@ -92,7 +91,7 @@ namespace FamilyReproducer.Models
         {
             // Создание нового документа семейства на основе шаблона
             var familyDoc = _app.NewFamilyDocument(
-                _app.FamilyTemplatePath + @"\Шаблон семейства.rft"); // Нужно взять свой
+                _app.FamilyTemplatePath + @"\Metric Generic Model.rft"); // Нужно взять свой
 
             using (var trans = new Transaction(familyDoc, "Воссоздание семейства"))
             {
@@ -110,38 +109,62 @@ namespace FamilyReproducer.Models
                 }
 
                 // Добавление параметров в семейство, если их ещё нет
+                // Обязательно убедитесь, что категория семейства задана
+                if (familyDoc.OwnerFamily.FamilyCategory == null)
+                {
+                    familyDoc.OwnerFamily.FamilyCategory =
+                        familyDoc.Settings.Categories.get_Item(BuiltInCategory.OST_GenericModel);
+                }
+
+                // Добавление параметров
                 foreach (var paramData in familyData.Parameters)
+                {
+                    if (string.IsNullOrWhiteSpace(paramData.Name))
+                        continue;
+
                     if (!ParameterExists(familyDoc.FamilyManager, paramData.Name))
                     {
-                        var fp = familyDoc.FamilyManager.AddParameter(
-                            paramData.Name,
-                            paramData.Group,
-                            paramData.Type,
-                            paramData.IsInstance);
+                        try
+                        {
+                            var fp = familyDoc.FamilyManager.AddParameter(
+                                paramData.Name,
+                                groupTypeId: GroupTypeId.Constraints,
+                                specTypeId: SpecTypeId.Length,
+                                paramData.IsInstance);
 
-                        // Установка формулы или значения параметра
-                        if (!string.IsNullOrEmpty(paramData.Formula))
-                            familyDoc.FamilyManager.SetFormula(fp, paramData.Formula);
-                        else if (paramData.Value != null)
-                            switch (fp.StorageType)
+                            // Установка значения или формулы
+                            if (!string.IsNullOrEmpty(paramData.Formula))
                             {
-                                case StorageType.Double:
-                                    familyDoc.FamilyManager.Set(fp, Convert.ToDouble(paramData.Value));
-                                    break;
-                                case StorageType.Integer:
-                                    familyDoc.FamilyManager.Set(fp, Convert.ToInt32(paramData.Value));
-                                    break;
-                                case StorageType.String:
-                                    familyDoc.FamilyManager.Set(fp, paramData.Value.ToString());
-                                    break;
-                                case StorageType.ElementId:
-                                    // Обработка ElementId пропущена, при необходимости добавьте
-                                    break;
+                                familyDoc.FamilyManager.SetFormula(fp, paramData.Formula);
                             }
+                            else if (paramData.Value != null)
+                            {
+                                switch (fp.StorageType)
+                                {
+                                    case StorageType.Double:
+                                        familyDoc.FamilyManager.Set(fp, Convert.ToDouble(paramData.Value));
+                                        break;
+                                    case StorageType.Integer:
+                                        familyDoc.FamilyManager.Set(fp, Convert.ToInt32(paramData.Value));
+                                        break;
+                                    case StorageType.String:
+                                        familyDoc.FamilyManager.Set(fp, paramData.Value.ToString());
+                                        break;
+                                    case StorageType.ElementId:
+                                        break;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            TaskDialog.Show("Error",
+                                $"Ошибка при добавлении параметра {paramData.Name}:\n{ex.Message}");
+                        }
                     }
+                }
 
                 // Сбор уже существующих опорных плоскостей по имени
-                var refPlanes = new Dictionary<string, ReferencePlane>();
+                    var refPlanes = new Dictionary<string, ReferencePlane>();
                 var collector = new FilteredElementCollector(familyDoc).OfClass(typeof(ReferencePlane));
                 foreach (ReferencePlane rp in collector)
                     if (!refPlanes.ContainsKey(rp.Name))
@@ -295,7 +318,7 @@ namespace FamilyReproducer.Models
         {
             const double tolerance = 0.001;
 
-            // Получаем первый непустой план этажа (FloorPlan)
+            // Получаем первый план этажа (FloorPlan)
             var view = new FilteredElementCollector(familyDoc)
                 .OfClass(typeof(View))
                 .Cast<View>()
@@ -379,7 +402,7 @@ namespace FamilyReproducer.Models
 
                     if (centerPlane == null)
                     {
-                        // Создаем обычный размер без равенства сегментов
+                        // Создаем обычный размер без равных сегментов
                         var refArrayLabeled = new ReferenceArray();
                         refArrayLabeled.Append(sorted[0].Ref);
                         refArrayLabeled.Append(sorted[1].Ref);

@@ -74,14 +74,19 @@ namespace FamilyReproducer.Services
             var fm = familyDoc.FamilyManager;
 
             foreach (FamilyParameter param in fm.Parameters)
+            {
+                var dataType = param.Definition.GetDataType();
+                var typeId = dataType != null ? dataType.TypeId : null;
+
                 paramList.Add(new ParameterData
                 {
                     Name = param.Definition.Name,
-                    Type = param.Definition.ParameterType,
+                    Type = typeId,
                     IsInstance = param.IsInstance,
                     Group = param.Definition.ParameterGroup,
                     Value = GetParameterValue(fm, param)
                 });
+            }
 
             return paramList;
         }
@@ -131,7 +136,7 @@ namespace FamilyReproducer.Services
                 }
                 catch (Exception)
                 {
-                    // Ошибка обработки конкретной экструзии — пропускаем
+                   
                 }
 
             return geometries;
